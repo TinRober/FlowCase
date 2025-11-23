@@ -5,7 +5,7 @@ estruturado (CASES)**, pausas automáticas e controle de mensagens para
 evitar interferência durante o atendimento humano.
 
 ⚠ **Importante:**\
-A pasta `clientes/xxxx` foi **intencionalmente ignorada** no
+A pasta `clientes/` foi **intencionalmente ignorada** no
 `.gitignore` por questões de privacidade.\
 Caso você queira usar este projeto, **crie manualmente a pasta
 `clientes/` e a subpasta do cliente** (ex.: `clientes/MeuCliente/`).
