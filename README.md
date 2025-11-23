@@ -62,7 +62,7 @@ manualmente - O cliente escolhe falar com atendente\
 
 ``` sh
 git clone https://github.com/TinRober/FlowCase.git
-cd  FlowCase.git
+cd  FlowCase
 ```
 
 2.  Instale dependências:
