@@ -1,19 +1,14 @@
 {
-  "name": "FlowMate",
+  "name": "FlowCases-ArenaEmige",
   "version": "1.0.0",
-  "description": "FlowMate é uma plataforma de automação para WhatsApp com integração de IA generativa. Permite criar múltiplas instâncias independentes, suporte a atendimento humano assistido, filtragem de mensagens e controle inteligente de fluxos.",
-  "main": "bot/index.js",
+  "description": "Bot oficial da Arena Emige com integração WhatsApp e watchdog para estabilidade.",
+  "main": "index.js",
   "scripts": {
-    "start": "node bot/index.js"
+    "start": "index.js"
   },
   "dependencies": {
-    "dotenv": "^17.2.3",
-    "fs-extra": "^11.3.2",
-    "node-fetch": "^3.3.2",
-    "openai": "^6.9.0",
-    "puppeteer": "^24.30.0",
-    "puppeteer-core": "^22.15.0",
-    "qrcode": "^1.5.4",
+    "dotenv": "^16.4.5",
+    "puppeteer": "^24.3.0",
     "qrcode-terminal": "^0.12.0",
     "whatsapp-web.js": "^1.34.2",
     "winston": "^3.18.3",

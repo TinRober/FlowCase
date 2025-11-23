@@ -1,15 +1,14 @@
 function contatoEmAtendimento(atendimentoTemp, contato) {
-    const timestamp = atendimentoTemp[contato];
-    if (!timestamp) return false;
+    const expiraEm = atendimentoTemp[contato];
+    if (!expiraEm) return false;
 
-    // Se expirou, desbloqueia automaticamente
-    if (Date.now() > timestamp) {
+    // Expirado → limpa e libera
+    if (Date.now() > expiraEm) {
         delete atendimentoTemp[contato];
         return false;
     }
 
-    // Contato ainda bloqueado
-    return true;
+    return true; // ainda em atendimento
 }
 
 function marcarAtendimento(atendimentoTemp, contato, tempoMs) {
@@ -17,7 +16,7 @@ function marcarAtendimento(atendimentoTemp, contato, tempoMs) {
 }
 
 function resetAtendimento(atendimentoTemp) {
-    for (const key in atendimentoTemp) delete atendimentoTemp[key];
+    Object.keys(atendimentoTemp).forEach(key => delete atendimentoTemp[key]);
 }
 
 module.exports = { contatoEmAtendimento, marcarAtendimento, resetAtendimento };

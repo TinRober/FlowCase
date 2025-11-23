@@ -1,55 +1,53 @@
 /**
- * Gerencia filas de mensagens por cliente com delay.
- * - Cada cliente tem sua própria fila.
- * - Evita bloqueio do event loop.
- * - Inclui logs e tratamento de erros.
+ * Fila simples de envio de mensagens para o WhatsApp.
+ * - Apenas 1 fila global (ArenaEmige)
+ * - Mensagens enviadas com delay configurável
+ * - Evita flood e bloqueio do WhatsApp
  */
 
 const { logger } = require("./logger");
 
-const queues = new Map(); // Map<clienteId, { queue: [], isProcessing: boolean }>
+let queue = [];
+let isProcessing = false;
 
 function addToQueue(client, to, message, delay = 2000) {
-  const clienteId = client?.options?.authStrategy?.clientId || "default";
-
-  if (!queues.has(clienteId)) {
-    queues.set(clienteId, { queue: [], isProcessing: false });
-  }
-
-  const queueObj = queues.get(clienteId);
-  queueObj.queue.push({ client, to, message, delay });
-  processQueue(clienteId);
+  queue.push({ client, to, message, delay });
+  processQueue();
 }
 
-async function processQueue(clienteId) {
-  const queueObj = queues.get(clienteId);
-  if (!queueObj || queueObj.isProcessing || queueObj.queue.length === 0) return;
+async function processQueue() {
+  if (isProcessing || queue.length === 0) return;
 
-  queueObj.isProcessing = true;
-  const { client, to, message, delay } = queueObj.queue.shift();
+  isProcessing = true;
+  const { client, to, message, delay } = queue.shift();
 
   try {
+    // Delay configurável
     await new Promise(resolve => setTimeout(resolve, delay));
+
+    // Envia mensagem
     await client.sendMessage(to, message);
-    logger.info(`[${clienteId}] Mensagem enviada para ${to}: ${message}`);
+
+    logger.info(`Mensagem enviada para ${to}: ${message}`);
   } catch (err) {
-    logger.error(`[${clienteId}] Erro ao enviar mensagem para ${to}: ${err.message}`);
+    logger.error(`Erro ao enviar mensagem para ${to}: ${err.message}`);
   } finally {
-    queueObj.isProcessing = false;
-    processQueue(clienteId);
+    isProcessing = false;
+    processQueue(); // Processa próximo
   }
 }
 
-function getQueueStatus(clienteId) {
-  const queueObj = queues.get(clienteId);
-  return queueObj ? { size: queueObj.queue.length, isProcessing: queueObj.isProcessing } : null;
+function getQueueStatus() {
+  return {
+    size: queue.length,
+    isProcessing
+  };
 }
 
-function clearQueue(clienteId) {
-  if (queues.has(clienteId)) {
-    queues.get(clienteId).queue = [];
-    logger.warn(`[${clienteId}] Fila limpa.`);
-  }
+function clearQueue() {
+  queue = [];
+  isProcessing = false;
+  logger.warn("Fila global limpa.");
 }
 
 module.exports = { addToQueue, getQueueStatus, clearQueue };

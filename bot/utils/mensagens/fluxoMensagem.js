@@ -1,29 +1,25 @@
 /**
- * TRATAMENTO PRINCIPAL DE MENSAGENS (versão final corrigida)
- * - Bloqueio automático de 30 minutos quando você envia mensagem manual
+ * TRATAMENTO PRINCIPAL DE MENSAGENS (versão SEM IA)
+ * - Pausa automática de 30 minutos quando VOCÊ ou a Arena Emige envia mensagem
  * - Filtra mensagens inválidas
- * - Protege contra mensagens antigas
- * - Previne respostas duplicadas e repetidas sem travar o fluxo
- * - Respeita atendimento humano
- * - Aciona IA ou CASES pelo flowRouter
+ * - Evita duplicadas
+ * - Respeita atendimento humano e pausas
+ * - Roda apenas fluxo CASES
  */
 
-const { isMensagemTrivial } = require("./mensagens");
 const { logger } = require("../core/logger");
 const { processarMensagemId } = require("../core/messageDeduplicator");
 const { contatoEmAtendimento, marcarAtendimento } = require("./atendimentoHumano");
 const { isBloqueado } = require("../core/ownerBlock");
 const { flowRouter } = require("../flow/flowRouter");
-const { getHistory, addMessage } = require("../core/history");
 
-// Lista de números seus (WhatsApp) que, ao enviar mensagem, ativam bloqueio
-const MEUS_NUMEROS = [
-  "5531971704966@c.us",
-  "553171704966@c.us", 
-  "553198876543@c.us"
+// Números que, ao enviar mensagem, ativam pausa automática
+const NUMEROS_PAUSA = [
+  "553172329057@c.us"    // Arena Emige
+                         // Rafael
 ];
 
-async function processarMensagem(msg, client, contextoIA, atendimentoTemp) {
+async function processarMensagem(msg, client, atendimentoTemp) {
     const contato = msg.from;
     const texto = msg.body?.trim();
     const clienteId = client.clienteId;
@@ -31,79 +27,64 @@ async function processarMensagem(msg, client, contextoIA, atendimentoTemp) {
     if (!texto) return;
 
     // ============================
-    // 1. IGNORAR GRUPOS
+    // 1. Ignorar grupos
     // ============================
     if (msg.isGroupMsg || contato.includes("@g.us")) return;
 
     // ============================
-    // 2. IGNORAR STATUS
+    // 2. Ignorar status
     // ============================
     if (contato.includes("@status")) return;
 
     // ============================
-    // 3. IGNORAR DUPLICADAS DE ID
+    // 3. Ignorar duplicadas
     // ============================
     if (processarMensagemId(client, msg)) return;
 
     // ============================
-    // 4. IGNORAR MENSAGENS ANTIGAS
+    // 4. Ignorar mensagens antigas
     // ============================
     if (client.startTimestamp && msg.timestamp < client.startTimestamp) return;
 
     // ============================
-    // 5. BLOQUEIO AUTOMÁTICO → 30 minutos
-    // Somente quando você envia a mensagem 
+    // 5. PAUSA AUTOMÁTICA → 30 min
+    // Se VOCÊ ou a ARENA EMIGE enviar para um contato,
+    // esse contato fica bloqueado por 30 minutos
     // ============================
-    if (msg.fromMe || MEUS_NUMEROS.includes(contato)) {
+    if (msg.fromMe || NUMEROS_PAUSA.includes(contato)) {
+
         const target = msg.fromMe ? msg.to : contato;
-        console.log(`[Manual] Você enviou mensagem para ${target}: "${msg.body}"`);
-        marcarAtendimento(atendimentoTemp, target, 30 * 60_000); // pausa de 30 minutos
-        logger.info(`[${clienteId}] Pausa de 30 min ativada para ${target} (mensagem enviada manualmente)`);
-        return; // não processa flowRouter
+
+        logger.info(
+            `[${clienteId}] Pausa de 30 minutos ativada porque ${contato} enviou mensagem para ${target}`
+        );
+
+        marcarAtendimento(atendimentoTemp, target, 30 * 60_000);
+        return; 
     }
 
     // ============================
-    // 6. IGNORAR CONTATOS BLOQUEADOS
+    // 6. Bloqueados manualmente
     // ============================
     if (isBloqueado(contato)) return;
 
     // ============================
-    // 7. IGNORAR SE EM ATENDIMENTO HUMANO / pausa de 30 min
+    // 7. Em atendimento humano / pausa
     // ============================
     if (contatoEmAtendimento(atendimentoTemp, contato)) {
-        logger.info(`[${clienteId}] Ignorado: usuário em pausa temporária (30 min).`);
+        logger.info(`[${clienteId}] Ignorado → contato em pausa/atendimento.`);
         return;
     }
 
     // ============================
-    // 8. TRIVIAIS → só ignorar se modo for IA
-    // ============================
-    if (client.mode === "ia" && isMensagemTrivial(texto)) {
-        logger.info(`[${clienteId}] Ignorado: mensagem trivial (modo IA).`);
-        // não retorna — apenas registra
-    }
-
-    // ============================
-    // 8b. CHECAR MENSAGENS REPETIDAS
-    // ============================
-    const historico = await getHistory(contato);
-    if (historico.length > 0) {
-        const ultima = historico[historico.length - 1]?.content;
-        if (ultima === texto && texto.length > 3) return;
-    }
-
-    // salvar mensagem no histórico
-    await addMessage(contato, "user", texto);
-
-    // ============================
-    // 9. DISPATCH FINAL → IA ou CASES
+    // 8. CHAMAR FLUXO CASES (único modo)
     // ============================
     try {
         await flowRouter(
             msg,
             client,
-            client.mode,
-            contextoIA,
+            "case",              // modo fixo
+            null,                
             atendimentoTemp,
             marcarAtendimento
         );

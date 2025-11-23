@@ -1,28 +1,44 @@
 /**
- * Gerencia sessões para evitar spam (anti-flood).
- * - Mantém intervalo mínimo entre respostas para cada número.
+ * Anti-flood simples para WhatsApp.
+ * - Garante intervalo mínimo entre respostas.
+ * - Remove registros antigos automaticamente.
  */
 
 const sessions = new Map();
-const TEMPO_PAUSA = 3000; // 3 segundos entre respostas
+const TEMPO_PAUSA = 2000; // 2s
+const LIMITE_LIMPEZA = 5000; // limpa sessões mais antigas que 5s
 
-/** Verifica se pode responder para um número (anti-flood).
- * @param {string} numero
-   @returns {boolean}
-  */
- 
-function podeResponder(numero) {
-  const agora = Date.now();
-  const ultimaMensagem = sessions.get(numero);
-  return !ultimaMensagem || (agora - ultimaMensagem > TEMPO_PAUSA);
+function normalizarNumero(numero) {
+  return numero ? String(numero).replace(/\D+/g, "") : null;
 }
 
-/**
- * Registra a última mensagem recebida para controle anti-flood.
- * @param {string} numero
- */
+function limparExpirados() {
+  const agora = Date.now();
+  for (const [numero, timestamp] of sessions.entries()) {
+    if (agora - timestamp > LIMITE_LIMPEZA) {
+      sessions.delete(numero);
+    }
+  }
+}
+
+function podeResponder(numero) {
+  const n = normalizarNumero(numero);
+  if (!n) return true;
+
+  limparExpirados();
+
+  const agora = Date.now();
+  const ultima = sessions.get(n);
+
+  return !ultima || (agora - ultima > TEMPO_PAUSA);
+}
+
 function registrarMensagem(numero) {
-  sessions.set(numero, Date.now());
+  const n = normalizarNumero(numero);
+  if (!n) return;
+
+  limparExpirados();
+  sessions.set(n, Date.now());
 }
 
 module.exports = {

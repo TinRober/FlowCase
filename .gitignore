@@ -1,97 +1,31 @@
-# =========================
-# Node.js
-# =========================
+# Node
 node_modules/
 npm-debug.log*
+yarn-debug.log*
 yarn-error.log*
-package-lock.json
-yarn.lock
 
-# =========================
 # Ambiente
-# =========================
 .env
 .env.local
 .env.*.local
 
-# =========================
 # Logs
-# =========================
 logs/
 *.log
 
-# =========================
-# Dados privados dos clientes
-# =========================
-bot/clientes/
-bot/instances/
-!bot/clientes/README.md
+# Sessão do WhatsApp
+clientes/
+instances/
+qrcodes/
+session/
+session-*
+*.data.json
 
-# =========================
-# WhatsApp Web.js cache e sessões
-# =========================
-bot/.wwebjs_cache/
-bot/instances/
-chrome-win/
+# Puppeteer / Chrome
+.puppeteer/
+chrome-data/
+.cache/
 
-# QR codes & tmp do projeto
-bot/qrcodes/
-bot/temp/
-
-# =========================
-# Puppeteer / Chromium
-# =========================
-.local-chromium/
-chrome/
-chromium/
-chrome-linux/
-Chrome-bin/
-
-# =========================
-# Compilados / build
-# =========================
-dist/
-build/
-*.tsbuildinfo
-
-# =========================
-# Banco de dados local
-# =========================
-*.sqlite
-*.sqlite3
-*.db
-*.db3
-
-# =========================
-# Uploads / mídia recebida
-# =========================
-media/
-uploads/
-
-# =========================
-# IDEs / editores
-# =========================
-.vscode/
-.idea/
-*.sublime-project
-*.sublime-workspace
-
-# =========================
-# Sistema operacional
-# =========================
+# Sistema
 .DS_Store
 Thumbs.db
-
-# =========================
-# PM2 / process managers
-# =========================
-.pm2/
-pids/
-pms/
-pm2.log
-
-# =========================
-# Arquivos temporários
-# =========================
-*.tmp
-*.swp

@@ -1,6 +1,6 @@
 /**
  * Estado do cliente WhatsApp
- * Gerencia conexão, bloqueios temporários e ping.
+ * Usado para monitorar estabilidade, bloqueios temporários e heartbeat (ping).
  */
 function criarEstadoCliente() {
   let bloqueioTimeout = null;
@@ -9,24 +9,29 @@ function criarEstadoCliente() {
     conexaoEstavel: false,
     bloqueado: false,
     ultimoPing: Date.now(),
-    mensagensProcessadas: new Map(),
 
+    // Marca cliente como estável
     marcarEstavel() {
       this.conexaoEstavel = true;
     },
 
+    // Marca cliente como instável
     marcarInstavel() {
       this.conexaoEstavel = false;
     },
 
-    bloqueioTemp(ms) {
+    // Aplica bloqueio temporário
+    bloquearPor(ms) {
       if (bloqueioTimeout) clearTimeout(bloqueioTimeout);
+
       this.bloqueado = true;
+
       bloqueioTimeout = setTimeout(() => {
         this.bloqueado = false;
       }, ms);
     },
 
+    // Status resumido para logs/diagnóstico
     getStatus() {
       return {
         conexaoEstavel: this.conexaoEstavel,
@@ -35,27 +40,30 @@ function criarEstadoCliente() {
       };
     },
 
+    // Reset básico utilizado no início do bot
     reset() {
       this.conexaoEstavel = false;
       this.bloqueado = false;
       this.ultimoPing = Date.now();
-      this.mensagensProcessadas.clear();
     }
   };
 }
 
+/* Atualiza timestamp do último ping */
 function marcarPing(client) {
   if (client?.estado) {
     client.estado.ultimoPing = Date.now();
   }
 }
 
+/* Marca como estável */
 function marcarConexaoEstavel(client) {
   if (client?.estado) {
     client.estado.marcarEstavel();
   }
 }
 
+/* Marca como instável */
 function marcarConexaoInstavel(client) {
   if (client?.estado) {
     client.estado.marcarInstavel();

@@ -1,55 +1,59 @@
-const fs = require("fs");
-const path = require("path");
-const { WhatsAppClientHandler } = require("./WhatsAppClientHandler"); 
-const { logger } = require('../utils/core/logger');
+const { WhatsAppClientHandler } = require("./WhatsAppClientHandler");
+const { logger } = require("../utils/core/logger");
 
 class ClientManager {
   constructor() {
-    this.clients = new Map();
-    this.clientesDir = path.join(process.cwd(), "bot", "clientes");
+    this.client = null;              // apenas 1 cliente
+    this.clienteId = "arenaemige";   // fixo
   }
 
-  loadClients() {
-    const files = fs.readdirSync(this.clientesDir).filter(f => f.endsWith(".json"));
-    return files.map(f => path.basename(f, ".json"));
-  }
-
-  async startAllClients() {
-    const clienteIds = this.loadClients();
-    for (const id of clienteIds) {
-      await this.startClient(id);
-    }
-  }
-
-  async startClient(clienteId) {
-    if (this.clients.has(clienteId)) {
-      logger.warn(`Cliente ${clienteId} já está iniciado.`);
+  /**
+   * Inicia o único cliente do sistema
+   */
+  async startClient() {
+    if (this.client) {
+      logger.warn(`O cliente já está iniciado.`);
       return;
     }
-    const handler = new WhatsAppClientHandler(clienteId);
+
+    const handler = new WhatsAppClientHandler(this.clienteId);
+
     await handler.initialize();
-    this.clients.set(clienteId, handler);
-    logger.info(`Cliente ${clienteId} iniciado com sucesso.`);
+
+    this.client = handler;
+
+    logger.info(`Cliente ${this.clienteId} iniciado com sucesso.`);
   }
 
-  async restartClient(clienteId) {
-    if (this.clients.has(clienteId)) {
-      await this.clients.get(clienteId).destroy();
-      this.clients.delete(clienteId);
+  /**
+   * Reinicia o único cliente
+   */
+  async restartClient() {
+    if (this.client) {
+      await this.client.destroy();
+      logger.info(`Cliente reiniciado…`);
+      this.client = null;
     }
-    await this.startClient(clienteId);
+
+    await this.startClient();
   }
 
-  getClientStatus(clienteId) {
-    return this.clients.get(clienteId)?.getStatus() || "Não iniciado";
+  /**
+   * Status do único cliente
+   */
+  getClientStatus() {
+    return this.client?.getStatus() || "Não iniciado";
   }
 
-  async stopAllClients() {
-    for (const [id, handler] of this.clients.entries()) {
-      await handler.destroy();
-      logger.info(`Cliente ${id} parado.`);
+  /**
+   * Para o cliente único
+   */
+  async stopClient() {
+    if (this.client) {
+      await this.client.destroy();
+      logger.info(`Cliente parado.`);
+      this.client = null;
     }
-    this.clients.clear();
   }
 }
 

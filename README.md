@@ -1,153 +1,136 @@
-# FlowMate - WhatsApp Automation com IA
+# FlowCase -- Bot de Atendimento WhatsApp 
 
-FlowMate é uma plataforma de automação de atendimento via WhatsApp, suportando múltiplas instâncias independentes, integração com IA generativa e fluxo inteligente de mensagens. O sistema é preparado para deployment em Linux, Docker e AWS, com arquitetura escalável, logs centralizados e persistência isolada por cliente.
+Este projeto é um bot de atendimento para WhatsApp, focado em **fluxo
+estruturado (CASES)**, pausas automáticas e controle de mensagens para
+evitar interferência durante o atendimento humano.
 
----
+⚠ **Importante:**\
+A pasta `clientes/xxxx` foi **intencionalmente ignorada** no
+`.gitignore` por questões de privacidade.\
+Caso você queira usar este projeto, **crie manualmente a pasta
+`clientes/` e a subpasta do cliente** (ex.: `clientes/MeuCliente/`).
 
-## Tecnologias
+------------------------------------------------------------------------
 
-* Node.js
-* WhatsApp-Web.js
-* Puppeteer
-* OpenAI API
-* Linux
-* Docker
-* AWS (em desenvolvimento)
-* Fluxo inteligente de mensagens
+## 🚀 Tecnologias Utilizadas
 
----
+-   Node.js
+-   WhatsApp-Web.js
+-   Puppeteer
+-   Winston (logs)
+-   Deduplicação de mensagens
+-   Controle de pausas para atendimento humano
+-   Watchdog para estabilidade e auto-restart
 
-## Recursos Principais
+------------------------------------------------------------------------
 
-* Fluxo inteligente de mensagens: roteador de mensagens, modo IA e modo CASES.
-* Deduplicação avançada: evita respostas duplicadas e loops.
-* Watchdog de estabilidade: reinicia automaticamente sessões travadas.
-* Atendimento humano assistido: pausa automática do bot ao detectar interação manual.
-* Persistência isolada por cliente: contexto, histórico, configuração e sessão.
-* Filtragem de mensagens: anti-spam, anti-grupo, anti-status e mensagens triviais.
-* Controle de boas-vindas inteligente: evita múltiplos envios.
-* Deploy preparado para Linux: com Chromium externo.
-* Containerização: preparado para Docker e AWS.
-* Arquitetura escalável: logs centralizados, modularização e validação de fluxo.
-* Preparação para API oficial do WhatsApp Business: fácil migração futura.
+## 🧠 Funcionalidades Principais (Sem IA)
 
----
+✔ **Fluxo tipo CASES** -- respostas definidas e organizadas por opções\
+✔ **Pausa automática de 30 minutos** quando: - A equipe envia mensagem
+manualmente - O cliente escolhe falar com atendente\
+✔ **Bloqueio por contato**\
+✔ **Deduplicação avançada**\
+✔ **Watchdog**\
+✔ Ignora mensagens de grupo, status e mensagens antigas
 
-## Pré-requisitos
+------------------------------------------------------------------------
 
-* Node.js v18+
-* npm ou yarn
-* Chromium instalado
-* Acesso a terminal Linux, macOS ou Windows (WSL recomendado para Windows)
+## 📁 Estrutura Geral do Projeto
 
----
+    /index.js
+    /manager/
+    /clientes/        <-- ignorado no Git, deve ser criado manualmente
+    /logs/
+    /utils/
+    /instances/
+    /qrcodes/
 
-## Instalação
+------------------------------------------------------------------------
 
-1. Clone o repositório:
+## 🛠️ Pré-requisitos
 
+-   Node.js 18+
+-   npm ou yarn
+-   Chromium/Chrome instalado
+
+------------------------------------------------------------------------
+
+## 📦 Instalação
+
+1.  Clone o repositório:
+
+``` sh
+git clone https://github.com/TinRober/FlowCase.git
+cd  FlowCase.git
 ```
-git clone https://github.com/TinRober/FlowMate.git
-cd FlowMate
-```
 
-2. Instale dependências:
+2.  Instale dependências:
 
-```
+``` sh
 npm install
-ou
-yarn install
 ```
 
-3. Configure a variável de ambiente para o Chromium (Linux):
+3.  Crie as pastas necessárias:
 
-```
-export CHROME_PATH=/usr/bin/chromium
-```
-
-ou adicione ao `.env`:
-
-```
-CHROME_PATH=/usr/bin/chromium
+``` sh
+mkdir clientes
+mkdir sessions
+mkdir logs
 ```
 
----
+4.  Opcional (Linux): defina o caminho do Chromium no `.env`:
 
-## Criando e rodando um usuário
-
-1. Criar a pasta do cliente:
-
+```{=html}
+<!-- -->
 ```
-mkdir -p bot/clientes/Cliente1
-```
+    CHROME_PATH=/usr/bin/chromium
 
-2. Criar arquivo de configuração em `bot/clientes/Cliente1/Cliente1.json`:
+------------------------------------------------------------------------
 
-```
-{
-  "mode": "ia",
-  "mensagemBoasVindas": "Olá! Bem-vindo(a) ao FlowMate!",
-  "contextoIA": {},
-  "outrasConfiguracoes": {}
-}
+## ▶️ Executando o Bot
+
+``` sh
+node index.js
 ```
 
-3. Inicializar o cliente:
+O QR Code será exibido no terminal na primeira execução.
 
-```
-node bot/index.js --id=Cliente1
-```
+------------------------------------------------------------------------
 
-* O `--id` deve corresponder ao nome da pasta/arquivo JSON do cliente. O bot cria automaticamente a sessão em `bot/instances/Cliente1/`.
+## 🧩 Funcionamento do Bot
 
-4. QR Code na primeira execução:
+### 🔹 1. Fluxo CASES
 
-* Será exibido no terminal.
-* Também será salvo em `bot/qrcodes/qrcode-Cliente1.png`.
+As mensagens seguem o roteamento definido no `flowRouter`.
 
-5. Mensagens e monitoramento:
+### 🔹 2. Pausa automática (30min)
 
-* Mensagens são processadas pelo modo configurado (`ia` ou `case`).
-* Logs são exibidos no console e salvos em `logs/`.
-* Watchdog reinicia automaticamente clientes travados.
+O bot pausa automaticamente ao detectar: - Envio manual pelo WhatsApp
+conectado\
+- Opção "Falar com atendente"
 
----
+### 🔹 3. Watchdog
 
+Reinicia o bot se o WhatsApp travar.
 
-## Comandos úteis
+------------------------------------------------------------------------
 
-* Rodar um cliente específico:
+## 📌 Observação Importante
 
-```
-node bot/index.js --id=Cliente1
-```
+Como usa WhatsApp-Web.js: - O bot **não detecta** mensagens enviadas de
+outras instâncias do WhatsApp. - A pausa automática só funciona no
+**mesmo WhatsApp pareado** ao bot.
 
-* Reiniciar o cliente travado: watchdog faz isso automaticamente.
-* Visualizar logs: em `logs/` ou no console.
+------------------------------------------------------------------------
 
----
-
-## Contribuindo
-
-1. Fork o repositório.
-2. Crie sua branch: `git checkout -b minha-feature`.
-3. Faça commits das alterações: `git commit -m "Minha feature"`.
-4. Push para sua branch: `git push origin minha-feature`.
-5. Abra um Pull Request.
-
----
-
-## ATENÇÃO
-
-Durante o desenvolvimento do projeto percebi um erro gigante, não consigo bloquear o envio das mensagens se elas não forem enviadas da mesma instância do whatsapp, impossibilitando de usar esse modelo em servidor sem a API oficial do whatsapp. Usando fora da API oficial o bot fica enviando as mensagens independente de você começar a conversar com o contato, ele não pausa. No projeto existe a opção de pausa mas ela só funciona se as mensagens forem enviadas da mesma instância. Irei criar uma versão que rode nativamente e de forma isolada para cada usuário(cliente) na própria máquina dele.
-
-## Licença
+## 📝 Licença
 
 MIT License © 2025 Roberto Alzir Galarani Chaves
 
----
+------------------------------------------------------------------------
 
-## Contato
+## 📬 Contato
 
-* GitHub: [TinRober](https://github.com/TinRober)
-* E-mail: [galarani.dev@gmail.com](mailto:galarani.dev@gmail.com)
+-   GitHub: https://github.com/TinRober
+-   E-mail: galarani.dev@gmail.com
