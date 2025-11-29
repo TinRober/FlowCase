@@ -2,7 +2,7 @@ require("dotenv").config({ override: true });
 
 console.log(">>> INICIANDO BOT ARENA EMIGE <<<");
 
-const { WhatsAppClientHandler } = require("./manager/WhatsAppClientHandler");
+const { WhatsAppClientHandler } = require("./bot/manager/WhatsAppClientHandler");
 
 // Captura o ID do cliente via argumento (agora opcional)
 const clienteId =
