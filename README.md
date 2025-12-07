@@ -61,8 +61,8 @@ manualmente - O cliente escolhe falar com atendente\
 1.  Clone o repositório:
 
 ``` sh
-git clone https://github.com/TinRober/FlowCase.git
-cd  FlowCase
+git clone https://github.com/TinRober/flow-case.git
+cd  flow-case
 ```
 
 2.  Instale dependências:
